@@ -3,13 +3,13 @@
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:dart_odbc/dart_odbc.dart';
-import 'package:dart_odbc/src/libodbcext.dart';
+import 'package:db_client/db_client.dart';
+import 'package:db_client/src/odbc/libodbcext.dart';
 import 'package:ffi/ffi.dart';
 
-/// DartOdbc class
+/// Odbc class
 /// This is the base class that will be used to interact with the ODBC driver.
-class DartOdbc {
+class Odbc {
   /// DartOdbc constructor
   /// This constructor will initialize the ODBC environment and connection.
   /// The [pathToDriver] parameter is the path to the ODBC driver (optional).
@@ -19,7 +19,7 @@ class DartOdbc {
   /// Optionally the ODBC version can be specified using the [version] parameter
   /// Definitions for these values can be found in the [LibOdbc] class.
   /// Please note that some drivers may not work with some drivers.
-  factory DartOdbc({
+  factory Odbc({
     String? dsn,
     String? pathToDriver,
     @Deprecated('Is not used anymore') int? version,
@@ -28,14 +28,14 @@ class DartOdbc {
     )
     UtfType utfType = UtfType.utf16,
   }) {
-    return DartOdbc._internal(
+    return Odbc._internal(
       dsn: dsn,
       pathToDriver: pathToDriver,
       version: version,
     );
   }
 
-  DartOdbc._internal({String? dsn, String? pathToDriver, int? version})
+  Odbc._internal({String? dsn, String? pathToDriver, int? version})
       : _dsn = dsn {
     if (pathToDriver != null) {
       __sql = LibOdbcExt(DynamicLibrary.open(pathToDriver));
@@ -432,7 +432,7 @@ class DartOdbc {
         // and interpret the returned length accordingly.
         if (columnType != null && columnType.isBinary()) {
           // incremental read for binary data
-          final initialBuf = (columnType.size ?? 256);
+          final initialBuf = columnType.size ?? 256;
           var collected = <int>[];
           var bufSize = initialBuf;
           var done = false;
@@ -482,16 +482,25 @@ class DartOdbc {
         } else {
           // incremental read for wide char (UTF-16) data
           var collectedUnits = <int>[];
-          var unitBuf = (columnType?.size ?? 256);
+          var unitBuf = columnType?.size ?? 256;
           var done = false;
           while (!done) {
-            final buf = calloc.allocate<Uint16>(unitBuf);
+            // Allocate buffer: unitBuf elements * size of each Uint16
             final bufBytes = unitBuf * sizeOf<Uint16>();
-            tryOdbc(
-              _sql.SQLGetData(hStmt, i, SQL_WCHAR, buf.cast(), bufBytes, columnValueLength),
-              handle: hStmt,
-              onException: FetchException(),
+            final buf = calloc.allocate<Uint16>(bufBytes);
+            final status = _sql.SQLGetData(
+              hStmt,
+              i,
+              SQL_WCHAR,
+              buf.cast(),
+              bufBytes,
+              columnValueLength,
             );
+
+            if (status < 0) {
+              calloc.free(buf);
+              tryOdbc(status, handle: hStmt, onException: FetchException());
+            }
 
             if (columnValueLength.value == SQL_NULL_DATA) {
               calloc.free(buf);
@@ -501,22 +510,38 @@ class DartOdbc {
             }
 
             final returnedBytes = columnValueLength.value;
-            // if driver returns SQL_NO_TOTAL, we assume bufBytes filled
-            final unitsReturned = (returnedBytes > 0) ? (returnedBytes ~/ sizeOf<Uint16>()) : unitBuf;
+            
+            // Calculate how many Uint16 units were returned
+            int unitsReturned;
+            if (returnedBytes == SQL_NO_TOTAL) {
+              // Driver doesn't know total size, assume buffer is full minus null terminator
+              unitsReturned = unitBuf - 1;
+            } else if (returnedBytes > 0) {
+              // returnedBytes is the remaining bytes (not what was put in buffer)
+              // When there's more data, buffer is filled completely (minus null terminator)
+              if (status == SQL_SUCCESS_WITH_INFO || returnedBytes > bufBytes) {
+                unitsReturned = unitBuf - 1; // Full buffer minus null terminator
+              } else {
+                unitsReturned = returnedBytes ~/ sizeOf<Uint16>();
+              }
+            } else {
+              unitsReturned = 0;
+            }
+
             if (unitsReturned > 0) {
               collectedUnits.addAll(buf.asTypedList(unitsReturned));
             }
 
-            if (returnedBytes != SQL_NO_TOTAL && returnedBytes <= bufBytes) {
-              // finished
+            // Check if we're done: SQL_SUCCESS means no more data
+            if (status == SQL_SUCCESS) {
               calloc.free(buf);
               done = true;
               break;
             }
 
-            // need more
+            // SQL_SUCCESS_WITH_INFO means there's more data to read
             calloc.free(buf);
-            unitBuf = unitBuf * 2;
+            unitBuf = unitBuf * 2; // exponential growth for next iteration
           }
 
           if (collectedUnits.isEmpty) {

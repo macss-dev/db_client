@@ -7,7 +7,7 @@ environment:
   sdk: ">=3.0.0"
 
 dependencies:
-  dart_odbc:
+  db_client:
     path: ../
   dotenv: ^4.2.0
   flutter:

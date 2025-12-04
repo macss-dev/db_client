@@ -1,7 +1,7 @@
-name: dart_odbc
+name: db_client
 description: A Dart package for interacting with ODBC databases. It allows you to connect to ODBC data sources and execute SQL queries directly from your Dart applications.
-version: 4.2.0+1
-repository: https://github.com/SL-Pirate/dart_odbc
+version: 0.1.0+1
+repository: https://github.com/macss-dev/db_client.git
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -21,8 +21,7 @@ dev_dependencies:
   very_good_analysis: ^6.0.0
 
 topics:
-  - db
-  - database
+  - sql
   - odbc
   - sqlserver
   - oracle

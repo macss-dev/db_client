@@ -1,6 +1,6 @@
 import 'dart:ffi';
 import 'dart:typed_data';
-import 'package:dart_odbc/dart_odbc.dart';
+import 'package:db_client/db_client.dart';
 import 'package:ffi/ffi.dart';
 
 /// This class contains the conversion techniques required by odbc

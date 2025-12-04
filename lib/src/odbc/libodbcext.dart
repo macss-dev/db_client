@@ -2,7 +2,7 @@
 
 import 'dart:ffi';
 
-import 'package:dart_odbc/dart_odbc.dart';
+import 'package:db_client/db_client.dart';
 
 ///
 class LibOdbcExt extends LibOdbc {

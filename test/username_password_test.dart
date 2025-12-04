@@ -25,12 +25,17 @@ Map<String, String> loadDotEnv(String path) {
 void main() {
   test('read long NVARCHAR via incremental SQLGetData (no garbage)', () async {
     final env = loadDotEnv('example/.env');
-    final dsn = env['DSN'] ?? '';
+    final driver = env['DRIVER'] ?? 'ODBC Driver 17 for SQL Server';
+    final server = env['SERVER'] ?? 'localhost';
+    final database = env['DATABASE'] ?? '';
     final username = env['USERNAME'] ?? '';
     final password = env['PASSWORD'] ?? '';
 
-    final odbc = Odbc(dsn: dsn);
-    await odbc.connect(username: username, password: password);
+    // ignore: lines_longer_than_80_chars
+    final connectionString = 'DRIVER={$driver};SERVER=$server;DATABASE=$database;UID=$username;PWD=$password;';
+
+    final odbc = Odbc();
+    await odbc.connectWithConnectionString(connectionString);
 
     final rows = await odbc.execute('SELECT @@VERSION AS version');
     expect(rows, isNotEmpty);

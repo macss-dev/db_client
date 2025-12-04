@@ -1,13 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:db_client/db_client.dart';
 import 'package:dotenv/dotenv.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-
-import 'package:dart_odbc/dart_odbc.dart';
 
 void main(List<String> args) {
   run(args);
@@ -32,7 +31,7 @@ Future<void> run(List<String> args) async {
       : pathToFile;
 
   final connStr = "DRIVER={$driverName};DBQ=$pathOfLoadedFile;";
-  final odbc = DartOdbc();
+  final odbc = Odbc();
 
   try {
     await odbc.connectWithConnectionString(connStr);
@@ -45,7 +44,7 @@ Future<void> run(List<String> args) async {
 }
 
 // Handles retrieving and printing sheets and rows
-Future<void> _getAndPrintSheetsWithData(DartOdbc odbc) async {
+Future<void> _getAndPrintSheetsWithData(Odbc odbc) async {
   print("Retrieving sheets...");
   final sheets = await odbc.getTables();
 
@@ -70,7 +69,7 @@ Future<void> _getAndPrintSheetsWithData(DartOdbc odbc) async {
 }
 
 // Fetch and print rows from a sheet
-Future<void> _getAndPrintSheetData(DartOdbc odbc, String sheet) async {
+Future<void> _getAndPrintSheetData(Odbc odbc, String sheet) async {
   final rows = await odbc.execute("SELECT * FROM [$sheet]");
 
   if (rows.isEmpty) {

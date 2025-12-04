@@ -1,8 +1,8 @@
-# dart_odbc
+# db_client
 
 A Dart package for interacting with ODBC databases. It allows you to connect to ODBC data sources and execute SQL queries directly from your Dart applications.
 
-This package is inspired by the obsolete [odbc](https://pub.dev/packages/odbc) package by [Juan Mellado](https://github.com/jcmellado).
+This package is a fork of  [dart_odbc](https://pub.dev/packages/dart_odbc).
 
 [![style: very good analysis](https://img.shields.io/badge/style-very_good_analysis-B22C89.svg)](https://pub.dev/packages/very_good_analysis)
 

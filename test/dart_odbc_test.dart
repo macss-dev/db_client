@@ -1,4 +1,4 @@
-// import 'package:dart_odbc/dart_odbc.dart';
+// import 'package:db_client/db_client.dart';
 // import 'package:test/test.dart';
 
 void main() {
