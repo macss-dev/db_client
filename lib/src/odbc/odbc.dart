@@ -439,7 +439,8 @@ class Odbc {
           while (!done) {
             final buf = calloc.allocate<Uint8>(bufSize);
             tryOdbc(
-              _sql.SQLGetData(hStmt, i, SQL_C_BINARY, buf.cast(), bufSize, columnValueLength),
+              _sql.SQLGetData(hStmt, i, SQL_C_BINARY, buf.cast(), bufSize,
+                  columnValueLength),
               handle: hStmt,
               onException: FetchException(),
             );
@@ -455,7 +456,8 @@ class Odbc {
             // if driver returned SQL_NO_TOTAL or a size larger than buffer,
             // SQLGetData will fill up to bufSize; we append the bytes returned
             final returned = columnValueLength.value;
-            final toTake = (returned > 0 && returned < bufSize) ? returned : bufSize;
+            final toTake =
+                (returned > 0 && returned < bufSize) ? returned : bufSize;
             if (toTake > 0) {
               collected.addAll(buf.asTypedList(toTake));
             }
@@ -510,7 +512,7 @@ class Odbc {
             }
 
             final returnedBytes = columnValueLength.value;
-            
+
             // Calculate how many Uint16 units were returned
             int unitsReturned;
             if (returnedBytes == SQL_NO_TOTAL) {
@@ -520,7 +522,8 @@ class Odbc {
               // returnedBytes is the remaining bytes (not what was put in buffer)
               // When there's more data, buffer is filled completely (minus null terminator)
               if (status == SQL_SUCCESS_WITH_INFO || returnedBytes > bufBytes) {
-                unitsReturned = unitBuf - 1; // Full buffer minus null terminator
+                unitsReturned =
+                    unitBuf - 1; // Full buffer minus null terminator
               } else {
                 unitsReturned = returnedBytes ~/ sizeOf<Uint16>();
               }

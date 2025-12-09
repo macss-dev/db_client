@@ -32,7 +32,8 @@ void main() {
     final password = env['PASSWORD'] ?? '';
 
     // ignore: lines_longer_than_80_chars
-    final connectionString = 'DRIVER={$driver};SERVER=$server;DATABASE=$database;UID=$username;PWD=$password;';
+    final connectionString =
+        'DRIVER={$driver};SERVER=$server;DATABASE=$database;UID=$username;PWD=$password;';
 
     final odbc = Odbc();
     await odbc.connectWithConnectionString(connectionString);

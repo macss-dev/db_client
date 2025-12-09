@@ -1,6 +1,6 @@
-import 'dart:io';
-
 import 'package:db_client/db_client.dart';
+
+import 'utils.dart';
 
 /// Example repository demonstrating the DbClient pattern.
 ///
@@ -12,32 +12,11 @@ class ExampleRepository {
   static DbClient? _client;
   static DbClientConfig? _config;
 
-  /// Loads environment variables from a .env file
-  static Map<String, String> _loadDotEnv(String path) {
-    final file = File(path);
-    final map = <String, String>{};
-    if (!file.existsSync()) return map;
-    for (final line in file.readAsLinesSync()) {
-      final trimmed = line.trim();
-      if (trimmed.isEmpty || trimmed.startsWith('#')) continue;
-      final idx = trimmed.indexOf('=');
-      if (idx <= 0) continue;
-      final key = trimmed.substring(0, idx).trim();
-      var value = trimmed.substring(idx + 1).trim();
-      if ((value.startsWith('"') && value.endsWith('"')) ||
-          (value.startsWith("'") && value.endsWith("'"))) {
-        value = value.substring(1, value.length - 1);
-      }
-      map[key] = value;
-    }
-    return map;
-  }
-
   /// Gets the database configuration from .env file
   static DbClientConfig get _dbConfig {
     if (_config != null) return _config!;
 
-    final env = _loadDotEnv('.env');
+    final env = loadDotEnv('.env');
     _config = DbClientConfig(
       server: env['SERVER'] ?? 'localhost',
       database: env['DATABASE'],
@@ -49,6 +28,7 @@ class ExampleRepository {
   }
 
   /// Lazy initialization of the DbClient
+  /// Db client instance
   static DbClient get _db {
     _client ??= SqlDbClient(_dbConfig);
     return _client!;
