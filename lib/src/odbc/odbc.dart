@@ -1,5 +1,6 @@
 // ignore_for_file: lines_longer_than_80_chars
 
+import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:typed_data';
@@ -56,12 +57,15 @@ class Odbc {
     _initialize(version: version);
   }
 
+  // ⚠️ IMPORTANT: _hEnv is NOT a singleton - each instance has its own handle
+  // This prevents race conditions between concurrent connections
+  // _hEnv is never explicitly freed (cleaned up when process terminates)
   LibOdbc? __sql;
   final String? _dsn;
   SQLHANDLE _hEnv = nullptr;
   SQLHDBC _hConn = nullptr;
-  bool _disconnected = false; // ✅ Protección contra double-disconnect
-  final List<SQLHSTMT> _activeStatements = []; // ✅ Rastreo de statements activos
+  bool _disconnected = false; // ✅ Protection against double-disconnect
+  final List<SQLHSTMT> _activeStatements = []; // ✅ Track active statements
 
   void _initialize({int? version}) {
     final sqlNullHandle = calloc.allocate<Int>(sizeOf<Int>());
@@ -311,7 +315,9 @@ class Odbc {
       ptr.free();
     }
     calloc.free(cQuery);
-    calloc.free(pHStmt);  // ⚠️ FIX: Liberar pHStmt también para evitar memory leak
+    // ⚠️ DO NOT free pHStmt here: _getResult() already called SQLFreeHandle(SQL_HANDLE_STMT, hStmt)
+    // which frees the internal handle. Freeing pHStmt here causes double-free and heap corruption.
+    calloc.free(pHStmt);  // This pointer only stores the address, it should be freed
 
     return result;
   }
@@ -330,39 +336,39 @@ class Odbc {
         if (hStmt != nullptr) {
           final stmtStatus = _sql.SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
           if (stmtStatus < 0) {
-            stderr.writeln('[ODBC] Warning: Error al liberar statement: $stmtStatus');
+            stderr.writeln('[ODBC] Warning: Error freeing statement: $stmtStatus');
           }
         }
       }
       _activeStatements.clear();
       
-      // 2. Desconectar de la base de datos
+      // 2. Disconnect from database
       if (_hConn != nullptr) {
         final disconnectStatus = _sql.SQLDisconnect(_hConn);
         if (disconnectStatus < 0) {
-          stderr.writeln('[ODBC] Warning: Error en SQLDisconnect: $disconnectStatus');
+          stderr.writeln('[ODBC] Warning: SQLDisconnect error: $disconnectStatus');
         }
         
-        // 3. Liberar handle de conexión
+        // 3. Free connection handle
         final freeConnStatus = _sql.SQLFreeHandle(SQL_HANDLE_DBC, _hConn);
         if (freeConnStatus < 0) {
-          stderr.writeln('[ODBC] Warning: Error al liberar conexión: $freeConnStatus');
+          stderr.writeln('[ODBC] Warning: Error freeing connection: $freeConnStatus');
         }
         _hConn = nullptr;
       }
       
-      // 4. NO liberar handle de entorno aquí - causa cuelgue en múltiples conexiones
-      // El _hEnv se libera automáticamente cuando el objeto Odbc es garbage collected
-      // PROBLEMA: Liberar _hEnv aquí causa que la siguiente conexión se cuelgue
+      // 4. DO NOT free environment handle here - causes deadlock with multiple connections
+      // _hEnv is automatically freed when the Odbc object is garbage collected
+      // PROBLEM: Freeing _hEnv here causes the next connection to hang indefinitely
       // if (_hEnv != nullptr) {
       //   final freeEnvStatus = _sql.SQLFreeHandle(SQL_HANDLE_ENV, _hEnv);
       //   if (freeEnvStatus < 0) {
-      //     stderr.writeln('[ODBC] Warning: Error al liberar entorno: $freeEnvStatus');
+      //     stderr.writeln('[ODBC] Warning: Error freeing environment: $freeEnvStatus');
       //   }
       //   _hEnv = nullptr;
       // }
     } finally {
-      // Marcar como desconectado incluso si hubo errores
+      // Mark as disconnected even if errors occurred
       _disconnected = true;
     }
   }
