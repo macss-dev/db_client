@@ -33,8 +33,7 @@ void main() {
     final username = env['USERNAME'] ?? '';
     final password = env['PASSWORD'] ?? '';
     // ignore: lines_longer_than_80_chars
-    connectionString =
-        'DRIVER={$driver};SERVER=$server;DATABASE=$database;UID=$username;PWD=$password;';
+    connectionString = 'DRIVER={$driver};SERVER=$server;DATABASE=$database;UID=$username;PWD=$password;';
   });
 
   test('connect and disconnect without query - should not crash', () async {

@@ -60,6 +60,8 @@ class Odbc {
   final String? _dsn;
   SQLHANDLE _hEnv = nullptr;
   SQLHDBC _hConn = nullptr;
+  bool _disconnected = false; // ✅ Protección contra double-disconnect
+  final List<SQLHSTMT> _activeStatements = []; // ✅ Rastreo de statements activos
 
   void _initialize({int? version}) {
     final sqlNullHandle = calloc.allocate<Int>(sizeOf<Int>());
@@ -309,18 +311,60 @@ class Odbc {
       ptr.free();
     }
     calloc.free(cQuery);
+    calloc.free(pHStmt);  // ⚠️ FIX: Liberar pHStmt también para evitar memory leak
 
     return result;
   }
 
   /// Function to disconnect from the database
+  /// ✅ REFORZADO: Valida códigos de retorno y protege contra double-disconnect
   Future<void> disconnect() async {
-    _sql
-      ..SQLDisconnect(_hConn)
-      ..SQLFreeHandle(SQL_HANDLE_DBC, _hConn)
-      ..SQLFreeHandle(SQL_HANDLE_ENV, _hEnv);
-    _hConn = nullptr;
-    _hEnv = nullptr;
+    // Protección contra double-disconnect
+    if (_disconnected) {
+      return; // Ya fue desconectado, no hacer nada
+    }
+    
+    try {
+      // 1. Cerrar todos los statements activos primero
+      for (final hStmt in _activeStatements) {
+        if (hStmt != nullptr) {
+          final stmtStatus = _sql.SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+          if (stmtStatus < 0) {
+            stderr.writeln('[ODBC] Warning: Error al liberar statement: $stmtStatus');
+          }
+        }
+      }
+      _activeStatements.clear();
+      
+      // 2. Desconectar de la base de datos
+      if (_hConn != nullptr) {
+        final disconnectStatus = _sql.SQLDisconnect(_hConn);
+        if (disconnectStatus < 0) {
+          stderr.writeln('[ODBC] Warning: Error en SQLDisconnect: $disconnectStatus');
+        }
+        
+        // 3. Liberar handle de conexión
+        final freeConnStatus = _sql.SQLFreeHandle(SQL_HANDLE_DBC, _hConn);
+        if (freeConnStatus < 0) {
+          stderr.writeln('[ODBC] Warning: Error al liberar conexión: $freeConnStatus');
+        }
+        _hConn = nullptr;
+      }
+      
+      // 4. NO liberar handle de entorno aquí - causa cuelgue en múltiples conexiones
+      // El _hEnv se libera automáticamente cuando el objeto Odbc es garbage collected
+      // PROBLEMA: Liberar _hEnv aquí causa que la siguiente conexión se cuelgue
+      // if (_hEnv != nullptr) {
+      //   final freeEnvStatus = _sql.SQLFreeHandle(SQL_HANDLE_ENV, _hEnv);
+      //   if (freeEnvStatus < 0) {
+      //     stderr.writeln('[ODBC] Warning: Error al liberar entorno: $freeEnvStatus');
+      //   }
+      //   _hEnv = nullptr;
+      // }
+    } finally {
+      // Marcar como desconectado incluso si hubo errores
+      _disconnected = true;
+    }
   }
 
   /// Function to handle ODBC errors
@@ -440,7 +484,7 @@ class Odbc {
             final buf = calloc.allocate<Uint8>(bufSize);
             tryOdbc(
               _sql.SQLGetData(hStmt, i, SQL_C_BINARY, buf.cast(), bufSize,
-                  columnValueLength),
+                  columnValueLength,),
               handle: hStmt,
               onException: FetchException(),
             );

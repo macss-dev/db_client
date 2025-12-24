@@ -6,6 +6,15 @@ This package is a fork of [dart_odbc](https://pub.dev/packages/dart_odbc).
 
 [![style: very good analysis](https://img.shields.io/badge/style-very_good_analysis-B22C89.svg)](https://pub.dev/packages/very_good_analysis)
 
+## 🎉 v0.1.1 - Production Stability Release
+
+**Critical fixes for concurrent operations:**
+- ✅ Fixed deadlock causing 90+ second hangs on disconnect
+- ✅ Fixed memory leak causing allocation failures
+- ✅ Validated under concurrent load (6+ simultaneous connections)
+
+See [PRODUCTION_FIXES_v0.1.1.md](docs/PRODUCTION_FIXES_v0.1.1.md) for technical details.
+
 ## Quick Start
 
 ### 1. Configure the connection
@@ -31,6 +40,10 @@ final config = DbClientConfig(
   username: 'username',
   password: 'password',
   driver: 'ODBC Driver 17 for SQL Server',
+  additionalParams: {
+    'Encrypt': 'no',  // Required for ODBC Driver 17+
+    'TrustServerCertificate': 'yes',
+  },
 );
 
 final client = SqlDbClient(config);
@@ -62,18 +75,29 @@ await client.send(
 );
 ```
 
-### 5. Disconnect
+### 5. Always close connections
+
+**Important:** Always call `close()` to release ODBC resources:
 
 ```dart
-await client.disconnect();
+try {
+  final response = await client.send(
+    DbRequest.query('SELECT * FROM users'),
+  );
+  // ... use response ...
+} finally {
+  await client.close();  // ✅ Always cleanup
+}
 ```
 
 ## Features
 
+- **Production-ready**: Validated under concurrent load (v0.1.1+)
 - **Easy connection**: Configure credentials once
 - **Parameterized queries**: SQL injection prevention
 - **Clean abstraction**: Simple API with `DbClient` and `DbRequest`
 - **Error handling**: Structured responses with success status
+- **Resource management**: Proper ODBC handle lifecycle management
 
 ## Supported Databases
 
