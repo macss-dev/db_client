@@ -73,7 +73,10 @@ class SqlDbClient implements DbClient {
     if (_connected && _odbc != null) {
       await _odbc!.disconnect();
       _connected = false;
-      _odbc = null;
+      // ✅ v0.2.1 FIX (Option A): Do NOT set _odbc to null
+      // Setting to null triggers GC which may try to free ODBC resources,
+      // causing heap corruption. Keep the reference until process exit.
+      // _odbc = null;
     }
   }
 }

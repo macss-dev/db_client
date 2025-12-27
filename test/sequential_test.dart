@@ -43,18 +43,18 @@ void main() {
     stdout.writeln('\n${"=" * 60}');
     stdout.writeln('TEST: 5 CONEXIONES SECUENCIALES');
     stdout.writeln('Una conexión a la vez, cierra antes de abrir la siguiente');
-    stdout.writeln("=" * 60);
+    stdout.writeln('=' * 60);
 
     final stopwatch = Stopwatch()..start();
 
     // Ejecutar 5 conexiones UNA DESPUÉS DE OTRA
-    for (int i = 0; i < 5; i++) {
-      stdout.writeln('');
+    for (var i = 0; i < 5; i++) {
+      stdout.writeln();
       stdout.writeln('[$i] Creando cliente...');
       final client = SqlDbClient(config);
       
       stdout.writeln('[$i] Imprimiendo connection string:');
-      stdout.writeln('     ${config.connectionString.replaceAll(RegExp(r'PWD=[^;]+'), 'PWD=***')}');
+      stdout.writeln('     ${config.connectionString.replaceAll(RegExp('PWD=[^;]+'), 'PWD=***')}');
       
       try {
         stdout.writeln('[$i] Ejecutando query...');
@@ -88,6 +88,6 @@ void main() {
     stdout.writeln('✅ TEST EXITOSO');
     stdout.writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms');
     stdout.writeln('   Promedio por conexión: ${stopwatch.elapsedMilliseconds / 5}ms');
-    stdout.writeln("=" * 60);
+    stdout.writeln('=' * 60);
   });
 }

@@ -45,13 +45,13 @@ void main() {
     stdout.writeln('\n${"=" * 80}');
     stdout.writeln('TEST: 5 CONEXIONES CONCURRENTES (CONSERVADOR)');
     stdout.writeln('Verifica que no hay heap corruption con concurrencia moderada');
-    stdout.writeln("=" * 80);
+    stdout.writeln('=' * 80);
 
     final stopwatch = Stopwatch()..start();
     final futures = <Future<void>>[];
 
     // Crear 5 conexiones concurrentes
-    for (int i = 0; i < 5; i++) {
+    for (var i = 0; i < 5; i++) {
       final future = Future(() async {
         final client = SqlDbClient(config);
         try {
@@ -93,6 +93,6 @@ void main() {
     stdout.writeln('   Promedio por conexión: ${stopwatch.elapsedMilliseconds / 5}ms');
     stdout.writeln('   Sin heap corruption ✓');
     stdout.writeln('   Sin race conditions ✓');
-    stdout.writeln("=" * 80);
-  }, timeout: Timeout(Duration(minutes: 1)));
+    stdout.writeln('=' * 80);
+  }, timeout: const Timeout(Duration(minutes: 1)),);
 }

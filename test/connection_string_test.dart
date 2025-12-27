@@ -9,7 +9,7 @@ void main() {
     stdout.writeln('=== Test de Conexión SQL Server ===');
     
     // Connection string completa y explícita
-    final connectionString = 'DRIVER={ODBC Driver 17 for SQL Server};'
+    const connectionString = 'DRIVER={ODBC Driver 17 for SQL Server};'
         'SERVER=192.168.10.17,1433;'
         'DATABASE=master;'
         'UID=uu_firmaElectronica;'
@@ -18,13 +18,12 @@ void main() {
         'TrustServerCertificate=yes;'
         'Connection Timeout=30;';
     
-    stdout.writeln('Connection String: ${connectionString.replaceAll(RegExp(r'PWD=[^;]+'), 'PWD=***')}');
+    stdout.writeln('Connection String: ${connectionString.replaceAll(RegExp('PWD=[^;]+'), 'PWD=***')}');
     
     final config = DbClientConfig(
       server: '192.168.10.17',
       username: 'uu_firmaElectronica',
       password: 'nHmy34ePsUdz',
-      driver: 'ODBC Driver 17 for SQL Server',
       database: 'master', // Base de datos por defecto
       // connectionString: connectionString, // Connection string explícita
     );
@@ -41,7 +40,7 @@ void main() {
         ),
       );
 
-      stdout.writeln('');
+      stdout.writeln();
       stdout.writeln('Response success: ${response.success}');
       stdout.writeln('Response rows count: ${response.rows.length}');
       if (response.error != null) {
@@ -49,7 +48,7 @@ void main() {
       }
       
       if (response.success && response.rows.isNotEmpty) {
-        stdout.writeln('');
+        stdout.writeln();
         stdout.writeln('✅ SQL Server Version:');
         stdout.writeln(response.rows.first['version']);
       }
@@ -57,7 +56,7 @@ void main() {
       expect(response.success, isTrue, reason: response.error ?? 'Sin error');
       expect(response.rows, isNotEmpty);
     } finally {
-      stdout.writeln('');
+      stdout.writeln();
       stdout.writeln('Cerrando conexión...');
       await client.close();
       stdout.writeln('✓ Conexión cerrada');

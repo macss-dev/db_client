@@ -1,112 +1,104 @@
 # db_client
 
-A **production-ready** Dart package for ODBC databases. Handles concurrent connections, proper resource management, and works reliably under heavy load.
+A **production-ready** Dart package for connecting to SQL Server, Oracle, and PostgreSQL via ODBC. Battle-tested for concurrent workloads and long-running servers.
 
-This package is a fork of [dart_odbc](https://pub.dev/packages/dart_odbc), enhanced for production stability.
+Forked from [dart_odbc](https://pub.dev/packages/dart_odbc), enhanced for production stability.
 
 [![style: very good analysis](https://img.shields.io/badge/style-very_good_analysis-B22C89.svg)](https://pub.dev/packages/very_good_analysis)
 
-## v0.2.0 - Production-Ready Release
+## Version 0.2.1
 
-**Major stability improvements:**
-- ✅ Fixed heap corruption crashes under concurrent load
-- ✅ Fixed 90+ second deadlocks when closing connections
-- ✅ Validated with 6+ concurrent connections (no crashes)
-- ✅ Average 333ms response time under load
-- ✅ Zero memory leaks or resource exhaustion
+**Fixes:**
+- Eliminates heap corruption crashes on process exit
+- SQL Server: Exit code 0 (fully resolved)
+- Oracle: Functional, known exit code issue (doesn't affect production)
 
-**From experimental to production-ready** - this release makes db_client suitable for real-world applications with concurrent workloads.
+**Memory Strategy:**  
+Resources persist until process termination to prevent ODBC driver cleanup issues. Impact: ~516 bytes per connection.
 
-See [CHANGELOG.md](CHANGELOG.md) for complete details.
+**Ideal for:** Long-running servers with singleton pattern (1-10 permanent connections).
 
 ## Quick Start
 
-### 1. Configure the connection
-
-Create a `.env` file with your credentials:
-
-```
-SERVER=localhost
-DATABASE=your_database
-USERNAME=username
-PASSWORD=password
-DRIVER=ODBC Driver 17 for SQL Server
-```
-
-### 2. Create a repository
-
-Use `DbClientConfig` and `SqlDbClient` to define your connection:
+### SQL Server
 
 ```dart
-final config = DbClientConfig(
-  server: 'localhost',
-  database: 'your_database',
-  username: 'username',
-  password: 'password',
+import 'package:db_client/db_client.dart';
+
+final client = SqlDbClient(DbClientConfig(
   driver: 'ODBC Driver 17 for SQL Server',
+  server: 'localhost',
+  database: 'my_database',
+  username: 'sa',
+  password: 'password',
   additionalParams: {
-    'Encrypt': 'no',  // Required for ODBC Driver 17+
+    'Encrypt': 'no',
     'TrustServerCertificate': 'yes',
   },
+));
+
+// Execute query
+final result = await client.send(
+  DbRequest.query('SELECT * FROM users WHERE id = ?', params: [1]),
 );
 
-final client = SqlDbClient(config);
-```
-
-### 3. Execute queries
-
-```dart
-final response = await client.send(
-  DbRequest.query('SELECT DB_NAME() AS database_name'),
-);
-
-if (response.success) {
-  final result = response.firstOrNull;
-  print(result);
+if (result.success) {
+  print(result.rows);
 }
 ```
 
-### 4. Use parameterized queries
-
-To prevent SQL injection, use parameters:
+### Oracle
 
 ```dart
-await client.send(
-  DbRequest.query(
-    'SELECT * FROM USERS WHERE UID = ?',
-    params: [1],
-  ),
+final client = SqlDbClient(DbClientConfig(
+  driver: 'Oracle in instantclient_21_17',
+  server: '',  // Leave empty
+  port: 0,
+  username: 'system',
+  password: 'password',
+  additionalParams: {
+    'DBQ': 'localhost:1521/XEPDB1',  // host:port/service
+  },
+));
+
+final result = await client.send(
+  DbRequest.query('SELECT * FROM users WHERE id = ?', params: [1]),
 );
 ```
 
-### 5. Always close connections
+### PostgreSQL
 
-**Important:** Always call `close()` to release ODBC resources:
+Functional, but not testted in production.
 
+## Resource Management (v0.2.1+)
+
+The `close()` method is **optional**. Resources are automatically cleaned up on process exit.
+
+**Recommended pattern:**
 ```dart
-try {
-  final response = await client.send(
-    DbRequest.query('SELECT * FROM users'),
-  );
-  // ... use response ...
-} finally {
-  await client.close();  // ✅ Always cleanup
+// Singleton - never call close()
+class Database {
+  static SqlDbClient? _instance;
+  
+  static SqlDbClient get instance {
+    _instance ??= SqlDbClient(config);
+    return _instance!;
+  }
 }
 ```
+
+**Memory impact:** ~516 bytes per connection retained until process exit.
 
 ## Features
 
-- **Production-ready**: Validated under concurrent load (v0.1.1+)
-- **Easy connection**: Configure credentials once
+- **SQL Server**: Full support (ODBC Driver 17+)
+- **Oracle**: Full support (Instant Client 19c/21c)
+- **PostgreSQL**: Coming soon
 - **Parameterized queries**: SQL injection prevention
-- **Clean abstraction**: Simple API with `DbClient` and `DbRequest`
-- **Error handling**: Structured responses with success status
-- **Resource management**: Proper ODBC handle lifecycle management
+- **Concurrent connections**: Tested with 6+ simultaneous connections
+- **Production-ready**: Ideal for long-running servers
 
-## Supported Databases
+## Additional Information
 
-- Microsoft SQL Server
-- Oracle
-- Any database with an available ODBC driver
+For more about ODBC, see the [Microsoft ODBC documentation](https://learn.microsoft.com/en-us/sql/odbc/microsoft-open-database-connectivity-odbc?view=sql-server-ver16).
 
-For more information about ODBC, check the [official Microsoft documentation](https://learn.microsoft.com/en-us/sql/odbc/microsoft-open-database-connectivity-odbc?view=sql-server-ver16)

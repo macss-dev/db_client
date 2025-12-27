@@ -52,13 +52,13 @@ void main() {
       stdout.writeln('\n${"=" * 80}');
       stdout.writeln('TEST: 10 CONEXIONES CONCURRENTES');
       stdout.writeln('Cada conexión ejecuta una query y cierra correctamente');
-      stdout.writeln("=" * 80);
+      stdout.writeln('=' * 80);
 
       final stopwatch = Stopwatch()..start();
       final futures = <Future<void>>[];
 
       // Crear 10 conexiones concurrentes
-      for (int i = 0; i < 10; i++) {
+      for (var i = 0; i < 10; i++) {
         final future = Future(() async {
           final client = SqlDbClient(config);
           try {
@@ -99,26 +99,26 @@ void main() {
       stdout.writeln('   Promedio por conexión: ${stopwatch.elapsedMilliseconds / 10}ms');
       stdout.writeln('   Sin heap corruption ✓');
       stdout.writeln('   Sin race conditions ✓');
-      stdout.writeln("=" * 80);
-    }, timeout: Timeout(Duration(minutes: 2)));
+      stdout.writeln('=' * 80);
+    }, timeout: const Timeout(Duration(minutes: 2)),);
 
     test('✓ 20 conexiones con queries pesadas', () async {
       stdout.writeln('\n${"=" * 80}');
       stdout.writeln('TEST: 20 CONEXIONES CON QUERIES PESADAS');
       stdout.writeln('Simula carga pesada con múltiples queries por conexión');
-      stdout.writeln("=" * 80);
+      stdout.writeln('=' * 80);
 
       final stopwatch = Stopwatch()..start();
       final futures = <Future<void>>[];
 
-      for (int i = 0; i < 20; i++) {
+      for (var i = 0; i < 20; i++) {
         final future = Future(() async {
           final client = SqlDbClient(config);
           try {
             stdout.writeln('[$i] Conectando...');
             
             // Ejecutar 3 queries por conexión
-            for (int j = 0; j < 3; j++) {
+            for (var j = 0; j < 3; j++) {
               final response = await client.send(
                 DbRequest.query(
                   '''
@@ -153,21 +153,21 @@ void main() {
       stdout.writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms');
       stdout.writeln('   Total queries: 60');
       stdout.writeln('   Promedio: ${stopwatch.elapsedMilliseconds / 60}ms por query');
-      stdout.writeln("=" * 80);
-    }, timeout: Timeout(Duration(minutes: 3)));
+      stdout.writeln('=' * 80);
+    }, timeout: const Timeout(Duration(minutes: 3)),);
 
     test('✓ Stress test: 50 conexiones rápidas', () async {
       stdout.writeln('\n${"=" * 80}');
       stdout.writeln('STRESS TEST: 50 CONEXIONES RÁPIDAS');
       stdout.writeln('Máxima presión para detectar race conditions');
-      stdout.writeln("=" * 80);
+      stdout.writeln('=' * 80);
 
       final stopwatch = Stopwatch()..start();
       final futures = <Future<void>>[];
       var successCount = 0;
       var errorCount = 0;
 
-      for (int i = 0; i < 50; i++) {
+      for (var i = 0; i < 50; i++) {
         final future = Future(() async {
           final client = SqlDbClient(config);
           try {
@@ -204,22 +204,22 @@ void main() {
       stdout.writeln('   Exitosas: $successCount');
       stdout.writeln('   Errores: $errorCount');
       stdout.writeln('   Tasa de éxito: ${(successCount / 50 * 100).toStringAsFixed(1)}%');
-      stdout.writeln("=" * 80);
+      stdout.writeln('=' * 80);
 
       // Esperar mínimo 80% de éxito
       expect(successCount, greaterThanOrEqualTo(40), 
-        reason: 'Al menos 40 de 50 conexiones deben ser exitosas');
-    }, timeout: Timeout(Duration(minutes: 5)));
+        reason: 'Al menos 40 de 50 conexiones deben ser exitosas',);
+    }, timeout: const Timeout(Duration(minutes: 5)),);
 
     test('✓ Test de memory leaks - abrir y cerrar 100 conexiones', () async {
       stdout.writeln('\n${"=" * 80}');
       stdout.writeln('MEMORY LEAK TEST: 100 CONEXIONES SECUENCIALES');
       stdout.writeln('Verificar que no hay acumulación de memoria');
-      stdout.writeln("=" * 80);
+      stdout.writeln('=' * 80);
 
       final stopwatch = Stopwatch()..start();
 
-      for (int i = 0; i < 100; i++) {
+      for (var i = 0; i < 100; i++) {
         final client = SqlDbClient(config);
         try {
           final response = await client.send(
@@ -232,7 +232,7 @@ void main() {
           expect(response.success, isTrue);
           
           if (i % 10 == 0) {
-            stdout.writeln('[$i] ✓ Progreso: ${i}%');
+            stdout.writeln('[$i] ✓ Progreso: $i%');
           }
         } finally {
           await client.close();
@@ -246,7 +246,7 @@ void main() {
       stdout.writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms');
       stdout.writeln('   Promedio: ${stopwatch.elapsedMilliseconds / 100}ms por conexión');
       stdout.writeln('   Sin memory leaks ✓');
-      stdout.writeln("=" * 80);
-    }, timeout: Timeout(Duration(minutes: 5)));
+      stdout.writeln('=' * 80);
+    }, timeout: const Timeout(Duration(minutes: 5)),);
   });
 }

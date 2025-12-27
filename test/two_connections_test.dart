@@ -62,7 +62,7 @@ void main() {
     }
 
     // Esperar un poco antes de la segunda conexión
-    await Future.delayed(Duration(milliseconds: 500));
+    await Future<void>.delayed(const Duration(milliseconds: 500));
 
     stdout.writeln('=== SEGUNDA CONEXIÓN ===');
     stdout.writeln('Creando cliente 2...');

@@ -3,41 +3,34 @@ import 'dart:io';
 
 import 'package:db_client/db_client.dart';
 import 'package:dotenv/dotenv.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
-void main(List<String> args) {
-  run(args);
+void main(List<String> args) async {
+  await run(args);
 }
 
 Future<void> run(List<String> args) async {
   // loading variable from env
-  final DotEnv env = DotEnv()..load(['.env']);
+  final env = DotEnv()..load(['.env']);
 
-  // Path to the ODBC driver
-  // This can be found in the ODBC driver manager
-  // In windows this is a '.dll' file that is there in the installation folder of the ODBC driver
-  // in linux this has an extension of '.so' (shared library)
-  // In macos this should have an extension of '.dylib'
-  // final pathToDriver = env['PATH_TO_DRIVER']!;
+  // ODBC driver name
   final driverName = env['DRIVER_NAME']!;
   final pathToFile = env['PATH_TO_FILE']!;
 
-  // Load file if it's from assets, otherwise use provided path
-  final pathOfLoadedFile = pathToFile.startsWith("assets/")
-      ? await _loadAssetAndReturnPath(pathToFile)
-      : pathToFile;
+  // Verify file exists
+  final file = File(pathToFile);
+  if (!file.existsSync()) {
+    print('Error: File not found at $pathToFile');
+    return;
+  }
 
-  final connStr = "DRIVER={$driverName};DBQ=$pathOfLoadedFile;";
+  final connStr = 'DRIVER={$driverName};DBQ=$pathToFile;';
   final odbc = Odbc();
 
   try {
     await odbc.connectWithConnectionString(connStr);
     await _getAndPrintSheetsWithData(odbc);
   } catch (ex) {
-    print("Error: $ex");
+    print('Error: $ex');
   } finally {
     await odbc.disconnect();
   }
@@ -45,64 +38,46 @@ Future<void> run(List<String> args) async {
 
 // Handles retrieving and printing sheets and rows
 Future<void> _getAndPrintSheetsWithData(Odbc odbc) async {
-  print("Retrieving sheets...");
+  print('Retrieving sheets...');
   final sheets = await odbc.getTables();
 
   if (sheets.isEmpty) {
-    print("No sheets found.");
+    print('No sheets found.');
     return;
   }
 
-  print("Sheets found:");
-  for (var sheet in sheets) {
+  print('Sheets found:');
+  for (final sheet in sheets) {
     _printPrettyJson(sheet);
   }
 
   // Extract sheet names
   final sheetNames =
-      sheets.map((sheet) => sheet["TABLE_NAME"] as String).toList();
+      sheets.map((sheet) => sheet['TABLE_NAME'] as String).toList();
 
-  for (var sheet in sheetNames) {
-    print("\n\nSheet $sheet:");
+  for (final sheet in sheetNames) {
+    print('\n\nSheet $sheet:');
     await _getAndPrintSheetData(odbc, sheet);
   }
 }
 
 // Fetch and print rows from a sheet
 Future<void> _getAndPrintSheetData(Odbc odbc, String sheet) async {
-  final rows = await odbc.execute("SELECT * FROM [$sheet]");
+  final rows = await odbc.execute('SELECT * FROM [$sheet]');
 
   if (rows.isEmpty) {
-    print("No data in sheet: $sheet");
+    print('No data in sheet: $sheet');
     return;
   }
 
-  for (var row in rows) {
+  for (final row in rows) {
     _printPrettyJson(row);
-  }
-}
-
-// Load asset and return path for non-web platforms
-Future<String> _loadAssetAndReturnPath(String path) async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  try {
-    final byteData = await rootBundle.load(path);
-    final tempDir = await getTemporaryDirectory();
-    final tempFilePath = p.join(tempDir.path, path.substring("assets/".length));
-    final tempFile = File(tempFilePath);
-    await tempFile.writeAsBytes(byteData.buffer.asUint8List());
-
-    return tempFile.path;
-  } catch (error) {
-    print("Unable to load asset '$path'. Using the original path.");
-    return path;
   }
 }
 
 // Pretty print JSON data
 void _printPrettyJson(Map<String, dynamic> jsonData) {
-  final encoder = JsonEncoder.withIndent('  ');
+  const encoder = JsonEncoder.withIndent('  ');
   final prettyPrint = encoder.convert(jsonData);
-  debugPrint(prettyPrint);
+  print(prettyPrint);
 }
