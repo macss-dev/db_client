@@ -66,7 +66,7 @@ class Odbc {
   SQLHDBC _hConn = nullptr;
   bool _disconnected = false; // Protection against double-disconnect
   final List<SQLHSTMT> _activeStatements = []; // Track active statements
-  
+
   // FIX v0.2.1: Retain connection buffers to prevent heap corruption
   // ODBC drivers may retain internal references to these buffers even after API calls return
   // Similar to _hEnv fix in v0.2.0, these must persist for connection lifetime
@@ -114,7 +114,7 @@ class Odbc {
       throw ODBCException('DSN not provided');
     }
     final dsnLocal = _dsn!;
-    
+
     // ✅ FIX v0.2.1: Retain buffers to prevent heap corruption with concurrent connections
     _pHConnBuffer = calloc.allocate<SQLHDBC>(sizeOf<SQLHDBC>());
     tryOdbc(
@@ -124,12 +124,12 @@ class Odbc {
       onException: HandleException(),
     );
     _hConn = _pHConnBuffer!.value;
-    
+
     // Retain DSN/credentials buffers for connection lifetime
     _dsnBuffer = dsnLocal.toNativeUtf16();
     _usernameBuffer = username.toNativeUtf16();
     _passwordBuffer = password.toNativeUtf16();
-    
+
     tryOdbc(
       _sql.SQLConnectW(
         _hConn,
@@ -144,7 +144,7 @@ class Odbc {
       operationType: SQL_HANDLE_DBC,
       onException: ConnectionException(),
     );
-    
+
     // ❌ DO NOT free buffers here - they must persist for connection lifetime
     // Will be freed in disconnect()
   }
@@ -160,11 +160,11 @@ class Odbc {
   /// Throws a [ConnectionException] if the connection fails.
   Future<void> connectWithConnectionString(String connectionString) async {
     // ✅ FIX v0.2.1: Retain buffers to prevent heap corruption with concurrent connections
-    // CRITICAL: ODBC drivers (especially with tracing enabled) may retain internal 
+    // CRITICAL: ODBC drivers (especially with tracing enabled) may retain internal
     // references to these buffers even after SQLDriverConnectW returns.
     // Freeing them immediately causes STATUS_HEAP_CORRUPTION (-1073740940) when
     // multiple connections are created concurrently.
-    
+
     _pHConnBuffer = calloc.allocate<SQLHDBC>(sizeOf<SQLHDBC>());
     tryOdbc(
       _sql.SQLAllocHandle(SQL_HANDLE_DBC, _hEnv, _pHConnBuffer!),
@@ -194,7 +194,7 @@ class Odbc {
       operationType: SQL_HANDLE_DBC,
       onException: ConnectionException(),
     );
-    
+
     // ❌ DO NOT free buffers here - they must persist for connection lifetime
     // Drivers may access these buffers asynchronously (tracing, pooling, diagnostics)
     // Will be freed in disconnect()
@@ -335,14 +335,15 @@ class Odbc {
     calloc.free(cQuery);
     // ⚠️ DO NOT free pHStmt here: _getResult() already called SQLFreeHandle(SQL_HANDLE_STMT, hStmt)
     // which frees the internal handle. Freeing pHStmt here causes double-free and heap corruption.
-    calloc.free(pHStmt);  // This pointer only stores the address, it should be freed
+    calloc.free(
+        pHStmt); // This pointer only stores the address, it should be freed
 
     return result;
   }
 
   /// Function to disconnect from the database
   /// ✅ REFORZADO: Valida códigos de retorno y protege contra double-disconnect
-  /// 
+  ///
   /// ⚠️ IMPORTANT - Memory Management Strategy (v0.2.1):
   /// This method does NOT free connection buffers to prevent heap corruption during process
   /// cleanup. ODBC drivers may retain internal references to these buffers that outlive the
@@ -351,7 +352,7 @@ class Odbc {
   /// - Connection pooling
   /// - Diagnostic data collection
   /// - Asynchronous cleanup threads
-  /// 
+  ///
   /// Background:
   /// - v0.2.0: Fixed crashes by not freeing _hEnv (environment handle)
   /// - v0.2.1: Extended same pattern to connection buffers after discovering that:
@@ -360,7 +361,7 @@ class Odbc {
   ///   * Even with explicit disconnect(), the GC/process cleanup triggered double-free
   ///   * Testing revealed: NO disconnect() call = exit code 0 (success)
   ///                      WITH disconnect() call = exit code -1073740940 (heap corruption)
-  /// 
+  ///
   /// Solution (Option A - Complete):
   /// - disconnect() only sets the _disconnected flag
   /// - Does NOT call SQLDisconnect, SQLFreeHandle, or free buffers
@@ -368,7 +369,7 @@ class Odbc {
   /// - OS handles cleanup when process exits
   /// - Prevents double-free and heap corruption issues
   /// - Acceptable for singleton pattern (long-running servers)
-  /// 
+  ///
   /// Memory Impact:
   /// - ~500 bytes buffers + ODBC handles per connection retained until process exit
   /// - Negligible for typical server applications with few connections
@@ -497,8 +498,14 @@ class Odbc {
           while (!done) {
             final buf = calloc.allocate<Uint8>(bufSize);
             tryOdbc(
-              _sql.SQLGetData(hStmt, i, SQL_C_BINARY, buf.cast(), bufSize,
-                  columnValueLength,),
+              _sql.SQLGetData(
+                hStmt,
+                i,
+                SQL_C_BINARY,
+                buf.cast(),
+                bufSize,
+                columnValueLength,
+              ),
               handle: hStmt,
               onException: FetchException(),
             );

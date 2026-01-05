@@ -48,7 +48,7 @@ class DbClientConfig {
   String get connectionString {
     final parts = <String>[
       'DRIVER={$driver}',
-      'SERVER=$server,$port',  // SQL Server uses comma format
+      'SERVER=$server,$port', // SQL Server uses comma format
     ];
 
     if (database != null && database!.isNotEmpty) {

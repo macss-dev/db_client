@@ -28,7 +28,7 @@ Map<String, String> loadDotEnv(String path) {
 void main() {
   test('2 conexiones secuenciales', () async {
     final env = loadDotEnv('.env');
-    
+
     final config = DbClientConfig(
       server: env['MSSQL_SERVER'] ?? 'localhost',
       username: env['MSSQL_USERNAME'] ?? 'sa',
@@ -42,16 +42,15 @@ void main() {
 
     stdout
       ..writeln('\n=== PRIMERA CONEXIÓN ===')
-      ..writeln('Creando cliente 1...')
-    ;
+      ..writeln('Creando cliente 1...');
     final client1 = SqlDbClient(config);
-    
+
     try {
       stdout.writeln('Ejecutando query 1...');
       final response1 = await client1.send(
         DbRequest.query('SELECT 1 AS test', errorMessage: 'Error en query 1'),
       );
-      
+
       stdout.writeln('Response 1 success: ${response1.success}');
       if (!response1.success) {
         stderr.writeln('ERROR 1: ${response1.error}');
@@ -68,16 +67,15 @@ void main() {
 
     stdout
       ..writeln('=== SEGUNDA CONEXIÓN ===')
-      ..writeln('Creando cliente 2...')
-    ;
+      ..writeln('Creando cliente 2...');
     final client2 = SqlDbClient(config);
-    
+
     try {
       stdout.writeln('Ejecutando query 2...');
       final response2 = await client2.send(
         DbRequest.query('SELECT 2 AS test', errorMessage: 'Error en query 2'),
       );
-      
+
       stdout.writeln('Response 2 success: ${response2.success}');
       if (!response2.success) {
         stderr.writeln('ERROR 2: ${response2.error}');

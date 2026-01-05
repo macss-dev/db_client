@@ -28,7 +28,7 @@ Map<String, String> loadDotEnv(String path) {
 void main() {
   test('5 conexiones SECUENCIALES', () async {
     final env = loadDotEnv('.env');
-    
+
     final config = DbClientConfig(
       server: env['MSSQL_SERVER'] ?? 'localhost',
       username: env['MSSQL_USERNAME'] ?? 'sa',
@@ -52,10 +52,11 @@ void main() {
       stdout.writeln();
       stdout.writeln('[$i] Creando cliente...');
       final client = SqlDbClient(config);
-      
+
       stdout.writeln('[$i] Imprimiendo connection string:');
-      stdout.writeln('     ${config.connectionString.replaceAll(RegExp('PWD=[^;]+'), 'PWD=***')}');
-      
+      stdout.writeln(
+          '     ${config.connectionString.replaceAll(RegExp('PWD=[^;]+'), 'PWD=***')}');
+
       try {
         stdout.writeln('[$i] Ejecutando query...');
         final response = await client.send(
@@ -87,7 +88,8 @@ void main() {
     stdout.writeln('\n${"=" * 60}');
     stdout.writeln('✅ TEST EXITOSO');
     stdout.writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms');
-    stdout.writeln('   Promedio por conexión: ${stopwatch.elapsedMilliseconds / 5}ms');
+    stdout.writeln(
+        '   Promedio por conexión: ${stopwatch.elapsedMilliseconds / 5}ms');
     stdout.writeln('=' * 60);
   });
 }

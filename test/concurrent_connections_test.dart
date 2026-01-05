@@ -34,7 +34,7 @@ void main() {
     setUp(() {
       // Cargar variables del archivo .env
       final env = loadDotEnv('.env');
-      
+
       // Configuración para SQL Server usando credenciales del .env
       config = DbClientConfig(
         server: env['MSSQL_SERVER'] ?? 'localhost',
@@ -48,205 +48,234 @@ void main() {
       );
     });
 
-    test('✓ 10 conexiones concurrentes - sin singleton', () async {
-      stdout.writeln('\n${"=" * 80}');
-      stdout.writeln('TEST: 10 CONEXIONES CONCURRENTES');
-      stdout.writeln('Cada conexión ejecuta una query y cierra correctamente');
-      stdout.writeln('=' * 80);
+    test(
+      '✓ 10 conexiones concurrentes - sin singleton',
+      () async {
+        stdout.writeln('\n${"=" * 80}');
+        stdout.writeln('TEST: 10 CONEXIONES CONCURRENTES');
+        stdout
+            .writeln('Cada conexión ejecuta una query y cierra correctamente');
+        stdout.writeln('=' * 80);
 
-      final stopwatch = Stopwatch()..start();
-      final futures = <Future<void>>[];
+        final stopwatch = Stopwatch()..start();
+        final futures = <Future<void>>[];
 
-      // Crear 10 conexiones concurrentes
-      for (var i = 0; i < 10; i++) {
-        final future = Future(() async {
-          final client = SqlDbClient(config);
-          try {
-            stdout.writeln('[$i] Conectando...');
-            
-            final response = await client.send(
-              DbRequest.query(
-                'SELECT @@VERSION AS version, $i AS connection_id',
-                errorMessage: 'Error en query $i',
-              ),
-            );
+        // Crear 10 conexiones concurrentes
+        for (var i = 0; i < 10; i++) {
+          final future = Future(() async {
+            final client = SqlDbClient(config);
+            try {
+              stdout.writeln('[$i] Conectando...');
 
-            if (!response.success) {
-              stderr.writeln('[$i] ❌ ERROR: ${response.error}');
-            }
-            
-            expect(response.success, isTrue, reason: 'Query $i debe ser exitosa. Error: ${response.error}');
-            expect(response.rows.isNotEmpty, isTrue, reason: 'Debe retornar datos');
-            
-            final connectionId = response.rows.first['connection_id'];
-            stdout.writeln('[$i] ✓ Query exitosa - connection_id: $connectionId');
-          } finally {
-            await client.close();
-            stdout.writeln('[$i] 🔌 Desconectado');
-          }
-        });
-        
-        futures.add(future);
-      }
-
-      // Esperar que todas las conexiones terminen
-      await Future.wait(futures);
-      
-      stopwatch.stop();
-      stdout.writeln('\n${"=" * 80}');
-      stdout.writeln('✅ TEST EXITOSO');
-      stdout.writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms');
-      stdout.writeln('   Promedio por conexión: ${stopwatch.elapsedMilliseconds / 10}ms');
-      stdout.writeln('   Sin heap corruption ✓');
-      stdout.writeln('   Sin race conditions ✓');
-      stdout.writeln('=' * 80);
-    }, timeout: const Timeout(Duration(minutes: 2)),);
-
-    test('✓ 20 conexiones con queries pesadas', () async {
-      stdout.writeln('\n${"=" * 80}');
-      stdout.writeln('TEST: 20 CONEXIONES CON QUERIES PESADAS');
-      stdout.writeln('Simula carga pesada con múltiples queries por conexión');
-      stdout.writeln('=' * 80);
-
-      final stopwatch = Stopwatch()..start();
-      final futures = <Future<void>>[];
-
-      for (var i = 0; i < 20; i++) {
-        final future = Future(() async {
-          final client = SqlDbClient(config);
-          try {
-            stdout.writeln('[$i] Conectando...');
-            
-            // Ejecutar 3 queries por conexión
-            for (var j = 0; j < 3; j++) {
               final response = await client.send(
                 DbRequest.query(
-                  '''
+                  'SELECT @@VERSION AS version, $i AS connection_id',
+                  errorMessage: 'Error en query $i',
+                ),
+              );
+
+              if (!response.success) {
+                stderr.writeln('[$i] ❌ ERROR: ${response.error}');
+              }
+
+              expect(response.success, isTrue,
+                  reason:
+                      'Query $i debe ser exitosa. Error: ${response.error}');
+              expect(response.rows.isNotEmpty, isTrue,
+                  reason: 'Debe retornar datos');
+
+              final connectionId = response.rows.first['connection_id'];
+              stdout.writeln(
+                  '[$i] ✓ Query exitosa - connection_id: $connectionId');
+            } finally {
+              await client.close();
+              stdout.writeln('[$i] 🔌 Desconectado');
+            }
+          });
+
+          futures.add(future);
+        }
+
+        // Esperar que todas las conexiones terminen
+        await Future.wait(futures);
+
+        stopwatch.stop();
+        stdout.writeln('\n${"=" * 80}');
+        stdout.writeln('✅ TEST EXITOSO');
+        stdout.writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms');
+        stdout.writeln(
+            '   Promedio por conexión: ${stopwatch.elapsedMilliseconds / 10}ms');
+        stdout.writeln('   Sin heap corruption ✓');
+        stdout.writeln('   Sin race conditions ✓');
+        stdout.writeln('=' * 80);
+      },
+      timeout: const Timeout(Duration(minutes: 2)),
+    );
+
+    test(
+      '✓ 20 conexiones con queries pesadas',
+      () async {
+        stdout.writeln('\n${"=" * 80}');
+        stdout.writeln('TEST: 20 CONEXIONES CON QUERIES PESADAS');
+        stdout
+            .writeln('Simula carga pesada con múltiples queries por conexión');
+        stdout.writeln('=' * 80);
+
+        final stopwatch = Stopwatch()..start();
+        final futures = <Future<void>>[];
+
+        for (var i = 0; i < 20; i++) {
+          final future = Future(() async {
+            final client = SqlDbClient(config);
+            try {
+              stdout.writeln('[$i] Conectando...');
+
+              // Ejecutar 3 queries por conexión
+              for (var j = 0; j < 3; j++) {
+                final response = await client.send(
+                  DbRequest.query(
+                    '''
                   SELECT 
                     $i AS connection_id,
                     $j AS query_num,
                     GETDATE() AS timestamp,
                     @@VERSION AS version
                   ''',
-                  errorMessage: 'Error en conexión $i, query $j',
+                    errorMessage: 'Error en conexión $i, query $j',
+                  ),
+                );
+
+                expect(response.success, isTrue);
+              }
+
+              stdout.writeln('[$i] ✓ 3 queries exitosas');
+            } finally {
+              await client.close();
+              stdout.writeln('[$i] 🔌 Desconectado');
+            }
+          });
+
+          futures.add(future);
+        }
+
+        await Future.wait(futures);
+
+        stopwatch.stop();
+        stdout.writeln('\n${"=" * 80}');
+        stdout.writeln('✅ TEST EXITOSO - CARGA PESADA');
+        stdout.writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms');
+        stdout.writeln('   Total queries: 60');
+        stdout.writeln(
+            '   Promedio: ${stopwatch.elapsedMilliseconds / 60}ms por query');
+        stdout.writeln('=' * 80);
+      },
+      timeout: const Timeout(Duration(minutes: 3)),
+    );
+
+    test(
+      '✓ Stress test: 50 conexiones rápidas',
+      () async {
+        stdout.writeln('\n${"=" * 80}');
+        stdout.writeln('STRESS TEST: 50 CONEXIONES RÁPIDAS');
+        stdout.writeln('Máxima presión para detectar race conditions');
+        stdout.writeln('=' * 80);
+
+        final stopwatch = Stopwatch()..start();
+        final futures = <Future<void>>[];
+        var successCount = 0;
+        var errorCount = 0;
+
+        for (var i = 0; i < 50; i++) {
+          final future = Future(() async {
+            final client = SqlDbClient(config);
+            try {
+              final response = await client.send(
+                DbRequest.query(
+                  'SELECT $i AS id',
+                  errorMessage: 'Error en conexión $i',
                 ),
               );
 
-              expect(response.success, isTrue);
+              if (response.success) {
+                successCount++;
+              } else {
+                errorCount++;
+                stderr.writeln('[$i] ❌ Error: ${response.error}');
+              }
+            } catch (e) {
+              errorCount++;
+              stderr.writeln('[$i] ❌ Exception: $e');
+            } finally {
+              await client.close();
             }
-            
-            stdout.writeln('[$i] ✓ 3 queries exitosas');
-          } finally {
-            await client.close();
-            stdout.writeln('[$i] 🔌 Desconectado');
-          }
-        });
-        
-        futures.add(future);
-      }
+          });
 
-      await Future.wait(futures);
-      
-      stopwatch.stop();
-      stdout.writeln('\n${"=" * 80}');
-      stdout.writeln('✅ TEST EXITOSO - CARGA PESADA');
-      stdout.writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms');
-      stdout.writeln('   Total queries: 60');
-      stdout.writeln('   Promedio: ${stopwatch.elapsedMilliseconds / 60}ms por query');
-      stdout.writeln('=' * 80);
-    }, timeout: const Timeout(Duration(minutes: 3)),);
+          futures.add(future);
+        }
 
-    test('✓ Stress test: 50 conexiones rápidas', () async {
-      stdout.writeln('\n${"=" * 80}');
-      stdout.writeln('STRESS TEST: 50 CONEXIONES RÁPIDAS');
-      stdout.writeln('Máxima presión para detectar race conditions');
-      stdout.writeln('=' * 80);
+        await Future.wait(futures);
 
-      final stopwatch = Stopwatch()..start();
-      final futures = <Future<void>>[];
-      var successCount = 0;
-      var errorCount = 0;
+        stopwatch.stop();
+        stdout.writeln('\n${"=" * 80}');
+        stdout.writeln('✅ STRESS TEST COMPLETADO');
+        stdout.writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms');
+        stdout.writeln('   Exitosas: $successCount');
+        stdout.writeln('   Errores: $errorCount');
+        stdout.writeln(
+            '   Tasa de éxito: ${(successCount / 50 * 100).toStringAsFixed(1)}%');
+        stdout.writeln('=' * 80);
 
-      for (var i = 0; i < 50; i++) {
-        final future = Future(() async {
+        // Esperar mínimo 80% de éxito
+        expect(
+          successCount,
+          greaterThanOrEqualTo(40),
+          reason: 'Al menos 40 de 50 conexiones deben ser exitosas',
+        );
+      },
+      timeout: const Timeout(Duration(minutes: 5)),
+    );
+
+    test(
+      '✓ Test de memory leaks - abrir y cerrar 100 conexiones',
+      () async {
+        stdout.writeln('\n${"=" * 80}');
+        stdout.writeln('MEMORY LEAK TEST: 100 CONEXIONES SECUENCIALES');
+        stdout.writeln('Verificar que no hay acumulación de memoria');
+        stdout.writeln('=' * 80);
+
+        final stopwatch = Stopwatch()..start();
+
+        for (var i = 0; i < 100; i++) {
           final client = SqlDbClient(config);
           try {
             final response = await client.send(
               DbRequest.query(
                 'SELECT $i AS id',
-                errorMessage: 'Error en conexión $i',
+                errorMessage: 'Error en iteración $i',
               ),
             );
 
-            if (response.success) {
-              successCount++;
-            } else {
-              errorCount++;
-              stderr.writeln('[$i] ❌ Error: ${response.error}');
+            expect(response.success, isTrue);
+
+            if (i % 10 == 0) {
+              stdout.writeln('[$i] ✓ Progreso: $i%');
             }
-          } catch (e) {
-            errorCount++;
-            stderr.writeln('[$i] ❌ Exception: $e');
           } finally {
             await client.close();
           }
-        });
-        
-        futures.add(future);
-      }
-
-      await Future.wait(futures);
-      
-      stopwatch.stop();
-      stdout.writeln('\n${"=" * 80}');
-      stdout.writeln('✅ STRESS TEST COMPLETADO');
-      stdout.writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms');
-      stdout.writeln('   Exitosas: $successCount');
-      stdout.writeln('   Errores: $errorCount');
-      stdout.writeln('   Tasa de éxito: ${(successCount / 50 * 100).toStringAsFixed(1)}%');
-      stdout.writeln('=' * 80);
-
-      // Esperar mínimo 80% de éxito
-      expect(successCount, greaterThanOrEqualTo(40), 
-        reason: 'Al menos 40 de 50 conexiones deben ser exitosas',);
-    }, timeout: const Timeout(Duration(minutes: 5)),);
-
-    test('✓ Test de memory leaks - abrir y cerrar 100 conexiones', () async {
-      stdout.writeln('\n${"=" * 80}');
-      stdout.writeln('MEMORY LEAK TEST: 100 CONEXIONES SECUENCIALES');
-      stdout.writeln('Verificar que no hay acumulación de memoria');
-      stdout.writeln('=' * 80);
-
-      final stopwatch = Stopwatch()..start();
-
-      for (var i = 0; i < 100; i++) {
-        final client = SqlDbClient(config);
-        try {
-          final response = await client.send(
-            DbRequest.query(
-              'SELECT $i AS id',
-              errorMessage: 'Error en iteración $i',
-            ),
-          );
-
-          expect(response.success, isTrue);
-          
-          if (i % 10 == 0) {
-            stdout.writeln('[$i] ✓ Progreso: $i%');
-          }
-        } finally {
-          await client.close();
         }
-      }
 
-      stopwatch.stop();
-      stdout.writeln('\n${"=" * 80}');
-      stdout.writeln('✅ MEMORY LEAK TEST COMPLETADO');
-      stdout.writeln('   100 conexiones abiertas y cerradas correctamente');
-      stdout.writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms');
-      stdout.writeln('   Promedio: ${stopwatch.elapsedMilliseconds / 100}ms por conexión');
-      stdout.writeln('   Sin memory leaks ✓');
-      stdout.writeln('=' * 80);
-    }, timeout: const Timeout(Duration(minutes: 5)),);
+        stopwatch.stop();
+        stdout.writeln('\n${"=" * 80}');
+        stdout.writeln('✅ MEMORY LEAK TEST COMPLETADO');
+        stdout.writeln('   100 conexiones abiertas y cerradas correctamente');
+        stdout.writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms');
+        stdout.writeln(
+            '   Promedio: ${stopwatch.elapsedMilliseconds / 100}ms por conexión');
+        stdout.writeln('   Sin memory leaks ✓');
+        stdout.writeln('=' * 80);
+      },
+      timeout: const Timeout(Duration(minutes: 5)),
+    );
   });
 }

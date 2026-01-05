@@ -7,7 +7,7 @@ import 'package:test/test.dart';
 void main() {
   test('Test con connection string explícita', () async {
     stdout.writeln('=== Test de Conexión SQL Server ===');
-    
+
     // Connection string completa y explícita
     const connectionString = 'DRIVER={ODBC Driver 17 for SQL Server};'
         'SERVER=192.168.10.17,1433;'
@@ -17,9 +17,10 @@ void main() {
         'Encrypt=no;'
         'TrustServerCertificate=yes;'
         'Connection Timeout=30;';
-    
-    stdout.writeln('Connection String: ${connectionString.replaceAll(RegExp('PWD=[^;]+'), 'PWD=***')}');
-    
+
+    stdout.writeln(
+        'Connection String: ${connectionString.replaceAll(RegExp('PWD=[^;]+'), 'PWD=***')}');
+
     final config = DbClientConfig(
       server: '192.168.10.17',
       username: 'uu_firmaElectronica',
@@ -30,7 +31,7 @@ void main() {
 
     stdout.writeln('Creando cliente...');
     final client = SqlDbClient(config);
-    
+
     try {
       stdout.writeln('Enviando query SELECT @@VERSION...');
       final response = await client.send(
@@ -46,13 +47,13 @@ void main() {
       if (response.error != null) {
         stderr.writeln('Response error: ${response.error}');
       }
-      
+
       if (response.success && response.rows.isNotEmpty) {
         stdout.writeln();
         stdout.writeln('✅ SQL Server Version:');
         stdout.writeln(response.rows.first['version']);
       }
-      
+
       expect(response.success, isTrue, reason: response.error ?? 'Sin error');
       expect(response.rows, isNotEmpty);
     } finally {

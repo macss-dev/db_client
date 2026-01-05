@@ -29,14 +29,13 @@ void main() {
   test('Simple connection test', () async {
     // Cargar variables del archivo .env
     final env = loadDotEnv('.env');
-    
+
     stdout
       ..writeln('Configurando conexión...')
       ..writeln('Server: ${env['MSSQL_SERVER']}')
       ..writeln('Username: ${env['MSSQL_USERNAME']}')
-      ..writeln('Driver: ${env['MSSQL_DRIVER']}')
-    ;
-    
+      ..writeln('Driver: ${env['MSSQL_DRIVER']}');
+
     // Usar la misma configuración que en producción (mssql_repository.dart)
     final config = DbClientConfig(
       server: env['MSSQL_SERVER'] ?? 'localhost',
@@ -44,14 +43,16 @@ void main() {
       password: env['MSSQL_PASSWORD'] ?? 'Password123!',
       driver: env['MSSQL_DRIVER'] ?? 'ODBC Driver 17 for SQL Server',
       additionalParams: {
-        'Encrypt': 'no',  // Deshabilitar encriptación para evitar error con ODBC Driver 17
-        'TrustServerCertificate': 'yes',  // Confiar en el certificado del servidor
+        'Encrypt':
+            'no', // Deshabilitar encriptación para evitar error con ODBC Driver 17
+        'TrustServerCertificate':
+            'yes', // Confiar en el certificado del servidor
       },
     );
 
     stdout.writeln('Creando cliente...');
     final client = SqlDbClient(config);
-    
+
     try {
       stdout.writeln('Enviando query...');
       final response = await client.send(
@@ -64,13 +65,12 @@ void main() {
       stdout
         ..writeln('Response success: ${response.success}')
         ..writeln('Response rows: ${response.rows}')
-        ..writeln('Response error: ${response.error}')
-      ;
-      
+        ..writeln('Response error: ${response.error}');
+
       if (!response.success) {
         stderr.writeln('❌ ERROR: ${response.error}');
       }
-      
+
       expect(response.success, isTrue);
     } finally {
       stdout.writeln('Cerrando conexión...');
