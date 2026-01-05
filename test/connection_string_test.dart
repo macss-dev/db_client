@@ -19,7 +19,7 @@ void main() {
         'Connection Timeout=30;';
 
     stdout.writeln(
-        'Connection String: ${connectionString.replaceAll(RegExp('PWD=[^;]+'), 'PWD=***')}');
+        'Connection String: ${connectionString.replaceAll(RegExp('PWD=[^;]+'), 'PWD=***')}',);
 
     final config = DbClientConfig(
       server: '192.168.10.17',
@@ -41,24 +41,24 @@ void main() {
         ),
       );
 
-      stdout.writeln();
-      stdout.writeln('Response success: ${response.success}');
-      stdout.writeln('Response rows count: ${response.rows.length}');
+      stdout..writeln()
+      ..writeln('Response success: ${response.success}')
+      ..writeln('Response rows count: ${response.rows.length}');
       if (response.error != null) {
         stderr.writeln('Response error: ${response.error}');
       }
 
       if (response.success && response.rows.isNotEmpty) {
-        stdout.writeln();
-        stdout.writeln('✅ SQL Server Version:');
-        stdout.writeln(response.rows.first['version']);
+        stdout..writeln()
+        ..writeln('✅ SQL Server Version:')
+        ..writeln(response.rows.first['version']);
       }
 
       expect(response.success, isTrue, reason: response.error ?? 'Sin error');
       expect(response.rows, isNotEmpty);
     } finally {
-      stdout.writeln();
-      stdout.writeln('Cerrando conexión...');
+      stdout..writeln()
+      ..writeln('Cerrando conexión...');
       await client.close();
       stdout.writeln('✓ Conexión cerrada');
     }

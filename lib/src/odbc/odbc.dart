@@ -65,19 +65,19 @@ class Odbc {
   SQLHANDLE _hEnv = nullptr;
   SQLHDBC _hConn = nullptr;
   bool _disconnected = false; // Protection against double-disconnect
-  final List<SQLHSTMT> _activeStatements = []; // Track active statements
+  // final List<SQLHSTMT> _activeStatements = []; // Track active statements
 
   // FIX v0.2.1: Retain connection buffers to prevent heap corruption
   // ODBC drivers may retain internal references to these buffers even after API calls return
   // Similar to _hEnv fix in v0.2.0, these must persist for connection lifetime
-  Pointer<SQLHDBC>? _pHConnBuffer;
-  Pointer<Utf16>? _connectionStringBuffer;
-  Pointer<UnsignedShort>? _outConnectionStringBuffer;
-  Pointer<Short>? _outConnectionStringLenBuffer;
-  Pointer<Utf16>? _dsnBuffer;
-  Pointer<Utf16>? _usernameBuffer;
-  Pointer<Utf16>? _passwordBuffer;
-
+  late Pointer<SQLHDBC>? _pHConnBuffer;
+  late Pointer<Utf16>? _connectionStringBuffer;
+  late Pointer<UnsignedShort>? _outConnectionStringBuffer;
+  late Pointer<Short>? _outConnectionStringLenBuffer;
+  late Pointer<Utf16>? _dsnBuffer;
+  late Pointer<Utf16>? _usernameBuffer;
+  late Pointer<Utf16>? _passwordBuffer;
+  
   void _initialize({int? version}) {
     final sqlNullHandle = calloc.allocate<Int>(sizeOf<Int>());
     final pHEnv = calloc.allocate<SQLHANDLE>(sizeOf<SQLHANDLE>());
@@ -332,11 +332,13 @@ class Odbc {
     for (final ptr in pointers) {
       ptr.free();
     }
-    calloc.free(cQuery);
+    calloc
+      ..free(cQuery)
     // ⚠️ DO NOT free pHStmt here: _getResult() already called SQLFreeHandle(SQL_HANDLE_STMT, hStmt)
     // which frees the internal handle. Freeing pHStmt here causes double-free and heap corruption.
-    calloc.free(
-        pHStmt); // This pointer only stores the address, it should be freed
+      ..free(
+        pHStmt,) // This pointer only stores the address, it should be freed
+    ;
 
     return result;
   }

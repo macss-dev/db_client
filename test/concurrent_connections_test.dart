@@ -51,11 +51,10 @@ void main() {
     test(
       '✓ 10 conexiones concurrentes - sin singleton',
       () async {
-        stdout.writeln('\n${"=" * 80}');
-        stdout.writeln('TEST: 10 CONEXIONES CONCURRENTES');
-        stdout
-            .writeln('Cada conexión ejecuta una query y cierra correctamente');
-        stdout.writeln('=' * 80);
+        stdout..writeln('\n${"=" * 80}')
+        ..writeln('TEST: 10 CONEXIONES CONCURRENTES')
+        ..writeln('Cada conexión ejecuta una query y cierra correctamente')
+        ..writeln('=' * 80);
 
         final stopwatch = Stopwatch()..start();
         final futures = <Future<void>>[];
@@ -80,13 +79,13 @@ void main() {
 
               expect(response.success, isTrue,
                   reason:
-                      'Query $i debe ser exitosa. Error: ${response.error}');
+                      'Query $i debe ser exitosa. Error: ${response.error}',);
               expect(response.rows.isNotEmpty, isTrue,
-                  reason: 'Debe retornar datos');
+                  reason: 'Debe retornar datos',);
 
               final connectionId = response.rows.first['connection_id'];
               stdout.writeln(
-                  '[$i] ✓ Query exitosa - connection_id: $connectionId');
+                  '[$i] ✓ Query exitosa - connection_id: $connectionId',);
             } finally {
               await client.close();
               stdout.writeln('[$i] 🔌 Desconectado');
@@ -100,14 +99,14 @@ void main() {
         await Future.wait(futures);
 
         stopwatch.stop();
-        stdout.writeln('\n${"=" * 80}');
-        stdout.writeln('✅ TEST EXITOSO');
-        stdout.writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms');
-        stdout.writeln(
-            '   Promedio por conexión: ${stopwatch.elapsedMilliseconds / 10}ms');
-        stdout.writeln('   Sin heap corruption ✓');
-        stdout.writeln('   Sin race conditions ✓');
-        stdout.writeln('=' * 80);
+        stdout..writeln('\n${"=" * 80}')
+        ..writeln('✅ TEST EXITOSO')
+        ..writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms')
+        ..writeln(
+            '   Promedio por conexión: ${stopwatch.elapsedMilliseconds / 10}ms',)
+        ..writeln('   Sin heap corruption ✓')
+        ..writeln('   Sin race conditions ✓')
+        ..writeln('=' * 80);
       },
       timeout: const Timeout(Duration(minutes: 2)),
     );
@@ -115,11 +114,10 @@ void main() {
     test(
       '✓ 20 conexiones con queries pesadas',
       () async {
-        stdout.writeln('\n${"=" * 80}');
-        stdout.writeln('TEST: 20 CONEXIONES CON QUERIES PESADAS');
-        stdout
-            .writeln('Simula carga pesada con múltiples queries por conexión');
-        stdout.writeln('=' * 80);
+        stdout..writeln('\n${"=" * 80}')
+        ..writeln('TEST: 20 CONEXIONES CON QUERIES PESADAS')
+        ..writeln('Simula carga pesada con múltiples queries por conexión')
+        ..writeln('=' * 80);
 
         final stopwatch = Stopwatch()..start();
         final futures = <Future<void>>[];
@@ -161,13 +159,13 @@ void main() {
         await Future.wait(futures);
 
         stopwatch.stop();
-        stdout.writeln('\n${"=" * 80}');
-        stdout.writeln('✅ TEST EXITOSO - CARGA PESADA');
-        stdout.writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms');
-        stdout.writeln('   Total queries: 60');
-        stdout.writeln(
-            '   Promedio: ${stopwatch.elapsedMilliseconds / 60}ms por query');
-        stdout.writeln('=' * 80);
+        stdout..writeln('\n${"=" * 80}')
+        ..writeln('✅ TEST EXITOSO - CARGA PESADA')
+        ..writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms')
+        ..writeln('   Total queries: 60')
+        ..writeln(
+            '   Promedio: ${stopwatch.elapsedMilliseconds / 60}ms por query',)
+        ..writeln('=' * 80);
       },
       timeout: const Timeout(Duration(minutes: 3)),
     );
@@ -175,10 +173,10 @@ void main() {
     test(
       '✓ Stress test: 50 conexiones rápidas',
       () async {
-        stdout.writeln('\n${"=" * 80}');
-        stdout.writeln('STRESS TEST: 50 CONEXIONES RÁPIDAS');
-        stdout.writeln('Máxima presión para detectar race conditions');
-        stdout.writeln('=' * 80);
+        stdout..writeln('\n${"=" * 80}')
+        ..writeln('STRESS TEST: 50 CONEXIONES RÁPIDAS')
+        ..writeln('Máxima presión para detectar race conditions')
+        ..writeln('=' * 80);
 
         final stopwatch = Stopwatch()..start();
         final futures = <Future<void>>[];
@@ -216,14 +214,14 @@ void main() {
         await Future.wait(futures);
 
         stopwatch.stop();
-        stdout.writeln('\n${"=" * 80}');
-        stdout.writeln('✅ STRESS TEST COMPLETADO');
-        stdout.writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms');
-        stdout.writeln('   Exitosas: $successCount');
-        stdout.writeln('   Errores: $errorCount');
-        stdout.writeln(
-            '   Tasa de éxito: ${(successCount / 50 * 100).toStringAsFixed(1)}%');
-        stdout.writeln('=' * 80);
+        stdout..writeln('\n${"=" * 80}')
+        ..writeln('✅ STRESS TEST COMPLETADO')
+        ..writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms')
+        ..writeln('   Exitosas: $successCount')
+        ..writeln('   Errores: $errorCount')
+        ..writeln(
+            '   Tasa de éxito: ${(successCount / 50 * 100).toStringAsFixed(1)}%',)
+        ..writeln('=' * 80);
 
         // Esperar mínimo 80% de éxito
         expect(
@@ -238,10 +236,10 @@ void main() {
     test(
       '✓ Test de memory leaks - abrir y cerrar 100 conexiones',
       () async {
-        stdout.writeln('\n${"=" * 80}');
-        stdout.writeln('MEMORY LEAK TEST: 100 CONEXIONES SECUENCIALES');
-        stdout.writeln('Verificar que no hay acumulación de memoria');
-        stdout.writeln('=' * 80);
+        stdout..writeln('\n${"=" * 80}')
+        ..writeln('MEMORY LEAK TEST: 100 CONEXIONES SECUENCIALES')
+        ..writeln('Verificar que no hay acumulación de memoria')
+        ..writeln('=' * 80);
 
         final stopwatch = Stopwatch()..start();
 
@@ -266,14 +264,14 @@ void main() {
         }
 
         stopwatch.stop();
-        stdout.writeln('\n${"=" * 80}');
-        stdout.writeln('✅ MEMORY LEAK TEST COMPLETADO');
-        stdout.writeln('   100 conexiones abiertas y cerradas correctamente');
-        stdout.writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms');
-        stdout.writeln(
-            '   Promedio: ${stopwatch.elapsedMilliseconds / 100}ms por conexión');
-        stdout.writeln('   Sin memory leaks ✓');
-        stdout.writeln('=' * 80);
+        stdout..writeln('\n${"=" * 80}')
+        ..writeln('✅ MEMORY LEAK TEST COMPLETADO')
+        ..writeln('   100 conexiones abiertas y cerradas correctamente')
+        ..writeln('   Tiempo total: ${stopwatch.elapsedMilliseconds}ms')
+        ..writeln(
+            '   Promedio: ${stopwatch.elapsedMilliseconds / 100}ms por conexión',)
+        ..writeln('   Sin memory leaks ✓')
+        ..writeln('=' * 80);
       },
       timeout: const Timeout(Duration(minutes: 5)),
     );
