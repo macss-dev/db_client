@@ -1,6 +1,6 @@
 name: db_client
-description: A production-ready Dart package for ODBC databases. Supports concurrent connections, proper resource management, and works reliably under load.
-version: 0.2.1
+description: A Dart package for ODBC databases. Supports concurrent connections, proper resource management, and works reliably under load.
+version: 0.2.0
 repository: https://github.com/macss-dev/db_client.git
 
 environment:
