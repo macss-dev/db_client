@@ -64,10 +64,10 @@ class Odbc {
   final String? _dsn;
   SQLHANDLE _hEnv = nullptr;
   SQLHDBC _hConn = nullptr;
-  bool _disconnected = false; // ✅ Protection against double-disconnect
-  final List<SQLHSTMT> _activeStatements = []; // ✅ Track active statements
+  bool _disconnected = false; // Protection against double-disconnect
+  final List<SQLHSTMT> _activeStatements = []; // Track active statements
   
-  // ✅ FIX v0.2.1: Retain connection buffers to prevent heap corruption
+  // FIX v0.2.1: Retain connection buffers to prevent heap corruption
   // ODBC drivers may retain internal references to these buffers even after API calls return
   // Similar to _hEnv fix in v0.2.0, these must persist for connection lifetime
   Pointer<SQLHDBC>? _pHConnBuffer;

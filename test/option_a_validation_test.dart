@@ -58,7 +58,7 @@ void main() {
       
       expect(result.success, isTrue);
       expect(result.rows, isNotNull);
-      expect(result.rows!.length, equals(1));
+      expect(result.rows.length, equals(1));
       
       if (i % 10 == 0) {
         print('[$i/$iterations] ✓ Queries completed');

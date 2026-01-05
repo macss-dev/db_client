@@ -56,7 +56,7 @@ void main() {
     
     expect(result.success, isTrue);
     expect(result.rows, isNotNull);
-    expect(result.rows!.length, equals(1));
+    expect(result.rows.length, equals(1));
     
     print('✅ Oracle query successful');
   });
@@ -72,9 +72,9 @@ void main() {
     
     expect(result.success, isTrue);
     expect(result.rows, isNotNull);
-    expect(result.rows!.length, equals(1));
+    expect(result.rows.length, equals(1));
     
-    print('Database: ${result.rows![0]}');
+    print('Database: ${result.rows[0]}');
     print('✅ Oracle metadata query successful');
   });
   

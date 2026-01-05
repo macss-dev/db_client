@@ -30,10 +30,12 @@ void main() {
     // Cargar variables del archivo .env
     final env = loadDotEnv('.env');
     
-    stdout.writeln('Configurando conexión...');
-    stdout.writeln('Server: ${env['MSSQL_SERVER']}');
-    stdout.writeln('Username: ${env['MSSQL_USERNAME']}');
-    stdout.writeln('Driver: ${env['MSSQL_DRIVER']}');
+    stdout
+      ..writeln('Configurando conexión...')
+      ..writeln('Server: ${env['MSSQL_SERVER']}')
+      ..writeln('Username: ${env['MSSQL_USERNAME']}')
+      ..writeln('Driver: ${env['MSSQL_DRIVER']}')
+    ;
     
     // Usar la misma configuración que en producción (mssql_repository.dart)
     final config = DbClientConfig(
@@ -59,9 +61,11 @@ void main() {
         ),
       );
 
-      stdout.writeln('Response success: ${response.success}');
-      stdout.writeln('Response rows: ${response.rows}');
-      stdout.writeln('Response error: ${response.error}');
+      stdout
+        ..writeln('Response success: ${response.success}')
+        ..writeln('Response rows: ${response.rows}')
+        ..writeln('Response error: ${response.error}')
+      ;
       
       if (!response.success) {
         stderr.writeln('❌ ERROR: ${response.error}');

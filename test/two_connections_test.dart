@@ -40,8 +40,10 @@ void main() {
       },
     );
 
-    stdout.writeln('\n=== PRIMERA CONEXIÓN ===');
-    stdout.writeln('Creando cliente 1...');
+    stdout
+      ..writeln('\n=== PRIMERA CONEXIÓN ===')
+      ..writeln('Creando cliente 1...')
+    ;
     final client1 = SqlDbClient(config);
     
     try {
@@ -64,8 +66,10 @@ void main() {
     // Esperar un poco antes de la segunda conexión
     await Future<void>.delayed(const Duration(milliseconds: 500));
 
-    stdout.writeln('=== SEGUNDA CONEXIÓN ===');
-    stdout.writeln('Creando cliente 2...');
+    stdout
+      ..writeln('=== SEGUNDA CONEXIÓN ===')
+      ..writeln('Creando cliente 2...')
+    ;
     final client2 = SqlDbClient(config);
     
     try {
